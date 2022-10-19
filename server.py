@@ -1,5 +1,9 @@
 import socket
 import json
+import firebase_admin
+from firebase_admin import firestore
+
+db = firestore.client()
 
 if __name__ == '__main__':
     ip = '127.0.0.1'
