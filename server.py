@@ -1,9 +1,7 @@
 import socket
 import json
 import firebase_admin
-from firebase_admin import firestore
-
-db = firestore.client()
+from firebase_admin import firestore, credentials
 
 if __name__ == '__main__':
     ip = '127.0.0.1'
@@ -13,7 +11,16 @@ if __name__ == '__main__':
     server.bind((ip, port))
     server.listen(2)
 
-    #with open ("stories.json", "r") as saved_stories: # learn how to use json files
+    # Use the application default credentials.
+    cred = credentials.Certificate("story-builder-83e85-4390758674a9.json")
+    firebase_admin.initialize_app(cred, {'projectId': 'story-builder-83e85',})
+    db = firestore.client()
+
+    doc_ref = db.collection(u'stories').document(u'firststory')
+    doc_ref.set({
+    u'title': u'helloworld',
+    u'story': u'this is my story'
+    })
 
     client, address = server.accept()
     print(f'Connection Established - {address[0]}:{address[1]}')
