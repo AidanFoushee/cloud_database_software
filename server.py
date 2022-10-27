@@ -1,5 +1,4 @@
 import socket
-import json
 import firebase_admin
 from firebase_admin import firestore, credentials
 
@@ -16,11 +15,11 @@ if __name__ == '__main__':
     firebase_admin.initialize_app(cred, {'projectId': 'story-builder-83e85',})
     db = firestore.client()
 
-    doc_ref = db.collection(u'stories').document(u'firststory')
-    doc_ref.set({
-    u'title': u'helloworld',
-    u'story': u'this is my story'
-    })
+    # doc_ref = db.collection(u'stories').document(u'firststory')
+    # doc_ref.set({
+    # u'title': u'helloworld',
+    # u'story': u'this is my story'
+    # })
 
     client, address = server.accept()
     print(f'Connection Established - {address[0]}:{address[1]}')
@@ -28,8 +27,8 @@ if __name__ == '__main__':
 
     new_story = client.recv(1024)
     new_story = new_story.decode('utf-8')
-    story = ''
     string = ''
+    story = ''
     
     if new_story == 'Y':
         while string != 'QUIT':
@@ -42,22 +41,24 @@ if __name__ == '__main__':
                 client.send(bytes(story, 'utf-8'))
         title = client.recv(1024)
         title = title.decode('utf-8')
-        # with open ("stories.json", "r") as saved_stories:
-        #     stories = json.load(saved_stories)
-        with open ("stories.json", "w") as saved_stories:
-            completed_story = {title: story}
-            json.dump(completed_story, saved_stories)
+        completed_story = {'title': title, 
+                           'story': story}
+        result = db.collection('stories').document(title).get()
+        if result.exists:
+            print('story already exists')
+        db.collection('stories').document(title).set(completed_story) 
         client.close()
 
     elif new_story == 'N':
         old_story = client.recv(1024)
         old_story = old_story.decode('utf-8')
-        with open ("stories.json", "r") as old_stories:
-            stories = json.load(old_stories)
-            current_story = stories[old_story]
-            print(current_story)
-            print()
-            client.send(bytes(current_story, 'utf-8'))
+        result = db.collection('stories').document(old_story).get()
+        data = result.to_dict()
+        current_story = data['story']
+        
+        print(current_story)
+        print()
+        client.send(bytes(current_story, 'utf-8'))
         while string != 'QUIT':
             string = client.recv(1024)
             string = string.decode('utf-8')
@@ -66,7 +67,7 @@ if __name__ == '__main__':
                 current_story = current_story + ' ' + string
                 print(current_story)
                 client.send(bytes(current_story, 'utf-8'))
-        with open ("stories.json", "w") as saved_stories:
-            stories[old_story] = current_story
-            json.dump(stories, saved_stories)
-        client.close()
+        completed_story = {'title': data['title'],
+                           'story': current_story}
+        db.collection('stories').document(old_story).set(completed_story) # story is not being updated properly
+        client.close() 
