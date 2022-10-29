@@ -40,7 +40,7 @@ if __name__ == '__main__':
                 print(story)
                 client.send(bytes(story, 'utf-8'))
         title = client.recv(1024)
-        title = title.decode('utf-8')
+        title = title.decode('utf-8')  
         completed_story = {'title': title, 
                            'story': story}
         result = db.collection('stories').document(title).get()
